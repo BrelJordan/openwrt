@@ -1,0 +1,101 @@
+From 45786cba58fdc1ef14c38002f094f88f75572d58 Mon Sep 17 00:00:00 2001
+From: Jordan Ngako <jordanfalken@gmx.de>
+Date: Wed, 31 Dec 2025 12:30:30 +0100
+Subject: [PATCH] rk35xx.dts: change power domain
+
+---
+ .../boot/dts/rockchip/rk3568-rock-3b.dts      | 39 +++++--------------
+ arch/arm64/boot/dts/rockchip/rk356x.dtsi      | 10 +++++
+ 2 files changed, 20 insertions(+), 29 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts b/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts
+index 474aca996..004c6e064 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts
+@@ -168,6 +168,10 @@ simple-audio-card,codec {
+ 	};
+ };
+ 
++&power {
++    pd_npu-supply = <&vdd_npu>;
++};
++
+ 
+ &rknpu {
+ 	memory-region = <&rknpu_reserved>;
+@@ -179,26 +183,6 @@ &rknpu_mmu{
+ 	status="okay";
+ };
+ 
+-&power {
+-    /* keep this: the power-controller looks this up */
+-    pd_npu-supply = <&vdd_npu>;
+-
+-    /* add this: ensure PD_NPU exists as a genpd domain */
+-    pd_npu: power-domain@RK3568_PD_NPU {
+-        reg = <RK3568_PD_NPU>;
+-
+-        /* clock names vary by tree; this is the common RK3568 pattern */
+-        clocks = <&cru ACLK_NPU_PRE>,
+-                 <&cru HCLK_NPU_PRE>,
+-                 <&cru PCLK_NPU_PRE>;
+-
+-        /* optional but commonly used */
+-        // pm_qos = <&qos_npu>;
+-
+-        #power-domain-cells = <0>;
+-		domain-supply = <&vdd_npu>;
+-    };
+-};
+ 
+ &otp {
+     status = "okay";
+@@ -383,18 +367,15 @@ regulator-state-mem {
+ 			};
+ 
+ 			vdd_npu: DCDC_REG4 {
+-				regulator-name = "vdd_npu";
+-				regulator-boot-on;
+-				regulator-initial-mode = <0x2>;
+-				regulator-min-microvolt = <500000>;
+-				regulator-max-microvolt = <1350000>;
+-				regulator-ramp-delay = <6001>;
++    			regulator-name = "vdd_npu";
++    			regulator-boot-on;
++    			regulator-always-on;
+ 
+-				regulator-state-mem {
+-					regulator-off-in-suspend;
+-				};
++    			regulator-min-microvolt = <950000>;
++    			regulator-max-microvolt = <950000>;
+ 			};
+ 
++
+ 			vcc_1v8: DCDC_REG5 {
+ 				regulator-name = "vcc_1v8";
+ 				regulator-always-on;
+diff --git a/arch/arm64/boot/dts/rockchip/rk356x.dtsi b/arch/arm64/boot/dts/rockchip/rk356x.dtsi
+index a7971324c..fda9243f0 100644
+--- a/arch/arm64/boot/dts/rockchip/rk356x.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk356x.dtsi
+@@ -561,6 +561,16 @@ power: power-controller {
+ 			#power-domain-cells = <1>;
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
++			
++			/* These power domains are grouped by VD_NPU */
++			power-domain@RK3568_PD_NPU {
++				reg = <RK3568_PD_NPU>;
++				clocks = <&cru ACLK_NPU_PRE>,
++					 <&cru HCLK_NPU_PRE>,
++					 <&cru PCLK_NPU_PRE>;
++				#power-domain-cells = <0>;
++				//pm_qos = <&qos_npu>;
++			};
+ 
+ 			/* These power domains are grouped by VD_GPU */
+ 			power-domain@RK3568_PD_GPU {
+-- 
+2.52.0
+

@@ -1,0 +1,48 @@
+From 655abed60e71596205e824c8b89744b67d7573da Mon Sep 17 00:00:00 2001
+From: Jordan Ngako <jordanfalken@gmx.de>
+Date: Thu, 1 Jan 2026 14:06:03 +0100
+Subject: [PATCH] rk3568-rock5b: disbable iommu
+
+---
+ arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts |  2 +-
+ drivers/rknpu/rknpu_iommu.c                     | 10 ++++++++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts b/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts
+index 004c6e064..e81686c11 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3568-rock-3b.dts
+@@ -180,7 +180,7 @@ &rknpu {
+ };
+ 
+ &rknpu_mmu{
+-	status="okay";
++	status="disable";
+ };
+ 
+ 
+diff --git a/drivers/rknpu/rknpu_iommu.c b/drivers/rknpu/rknpu_iommu.c
+index 5b5755fc9..c67b2434c 100644
+--- a/drivers/rknpu/rknpu_iommu.c
++++ b/drivers/rknpu/rknpu_iommu.c
+@@ -214,7 +214,17 @@ int rknpu_iommu_dma_map_sg(struct device *dev, struct scatterlist *sg,
+ 			   bool iova_aligned)
+ {
+ 	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
++	if (!domain) {
++	    dev_err(dev, "rknpu: no IOMMU domain for device\n");
++	    return 0;                 // or return dma_map_sg(...), or return -ENODEV
++	}
++	
+ 	struct rknpu_iommu_dma_cookie *cookie = (void *)domain->iova_cookie;
++	if (!cookie) {
++	    dev_err(dev, "rknpu: IOMMU domain has no dma cookie (iova_cookie NULL)\n");
++	    return 0;                 // or fallback
++	}
++
+ 	struct iova_domain *iovad = &cookie->iovad;
+ 	struct scatterlist *s = NULL, *prev = NULL;
+ 	int prot = rknpu_dma_info_to_prot(dir, dev_is_dma_coherent(dev));
+-- 
+2.52.0
+

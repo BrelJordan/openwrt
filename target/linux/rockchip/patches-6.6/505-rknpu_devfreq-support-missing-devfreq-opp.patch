@@ -1,0 +1,27 @@
+From 7febb5b378d3dc07d380b5c6a40ce9d86185bdd5 Mon Sep 17 00:00:00 2001
+From: Jordan Ngako <jordanfalken@gmx.de>
+Date: Mon, 29 Dec 2025 20:20:55 +0100
+Subject: [PATCH] rknpu_devfreq: support missing devfreq opp
+
+---
+ drivers/rknpu/rknpu_devfreq.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/rknpu/rknpu_devfreq.c b/drivers/rknpu/rknpu_devfreq.c
+index f72d364a5..4d90b35f7 100644
+--- a/drivers/rknpu/rknpu_devfreq.c
++++ b/drivers/rknpu/rknpu_devfreq.c
+@@ -398,6 +398,10 @@ int rknpu_devfreq_init(struct rknpu_device *rknpu_dev)
+ 	info->data = &rockchip_npu_opp_data;
+ 	rockchip_get_opp_data(rockchip_npu_of_match, info);
+ 	ret = rockchip_init_opp_table(dev, info, "clk_npu", "rknpu");
++	if (ret == -EOPNOTSUPP) {
++    	dev_warn(dev, "Rockchip OPP helper missing; running without devfreq/OPP\n");
++    	return 0;  /* allow probe to continue */
++	}
+ 	if (ret) {
+ 		LOG_DEV_ERROR(dev, "failed to init_opp_table\n");
+ 		return -EINVAL;
+-- 
+2.52.0
+
