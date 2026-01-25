@@ -48,7 +48,8 @@ TFA_TARGETS:= \
 	rk3399 \
 	rk3576 \
 	rk3588
-
+TFA_MAKE_FLAGS+= \
+  SPD=opteed
 ifeq ($(BUILD_VARIANT),rk3399)
   M0_GCC_NAME:=arm-gnu-toolchain
   M0_GCC_RELEASE:=12.3.rel1
